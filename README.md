@@ -257,7 +257,7 @@ Returns a filtered list of orders.
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `customerId` | integer | No | Filter by customer ID |
-| `status` | string | No | Filter by order status (e.g., `Pending`, `Submitted`, `Shipped`, `Cancelled`) |
+| `status` | string | No | Filter by order status (e.g., `Pending`, `Submitted`, `Shipped`, `Cancelled`, `refunded`, `partially refunded`) |
 | `orderDate` | string | No | Filter to orders on or after this date |
 
 **Response:** `200 OK` — array of `OrderDTO`
@@ -415,9 +415,11 @@ Pending ──► Submitted ──► Shipped
    │
    └──► Cancelled
 
-Submitted / Shipped ──► refunded
-                    ──► partially refunded
+Submitted / Shipped ──► "refunded"
+                    ──► "partially refunded"
 ```
+
+> **Note:** The refund statuses are stored as lowercase strings (`"refunded"`, `"partially refunded"`) in the database, as set by `PaymentService`. All other statuses use title case.
 
 #### `OrderItems`
 | Column | Type | Constraints |

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: java-poc
+  datasource:
+    url: jdbc:sqlserver://DESKTOP-E2HJ4S6:1433;databaseName=FirstJavaApi;encrypt=false;TrustServerCertificate=true;
+    username: java_app
+    password: JavaPass
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl

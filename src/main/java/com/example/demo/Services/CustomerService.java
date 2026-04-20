@@ -1,13 +1,15 @@
 package com.example.demo.Services;
 import com.example.demo.Models.CustomerDTO;
 import com.example.demo.Repository.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
-
 import com.example.demo.Entities.Customers;
 
 @Service
 public class CustomerService {
+
+    private static final Logger _logger = LogManager.getLogger(CustomerService.class);
 
     private final CustomerRepository _customerRepository;
 
@@ -38,6 +40,7 @@ public class CustomerService {
         catch (Exception e)
         {
             System.err.println("Error creating customer: " + e.getMessage());
+            _logger.error("Error creating customer: ", e);
             return false;
         }
     }

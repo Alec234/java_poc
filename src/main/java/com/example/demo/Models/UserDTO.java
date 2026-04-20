@@ -1,21 +1,19 @@
 package com.example.demo.Models;
 
-
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Date;
 
 import lombok.Data;
 
 @Data
 public class UserDTO {
-    private int primaryId;
+    private Integer primaryId;
     private String userId;
     private String fullName;
-    private String lastLogin;
-    private String enabled;
+    private Date lastLogin;
+    private Character enabled;
     private CustomerDTO customers;
 
-    @Autowired
-    public UserDTO(int primaryId, String userId, String fullName, String lastLogin, String enabled, CustomerDTO customers) {
+    public UserDTO(Integer primaryId, String userId, String fullName, Date lastLogin, Character enabled, CustomerDTO customers) {
         this.primaryId = primaryId;
         this.userId = userId;
         this.fullName = fullName;

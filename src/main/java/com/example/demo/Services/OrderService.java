@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.Constants.Constants;
 import com.example.demo.Entities.OrderItems;
 import com.example.demo.Entities.Orders;
 import com.example.demo.Models.OrderDTO;
@@ -25,6 +27,7 @@ public class OrderService {
     private final OrderItemRepository _orderItemRepository;
     private final ProductRepository _productRepository;
     private final CustomerRepository _customerRepository;
+    private final Logger _logger = Logger.getLogger(OrderService.class.getName());
 
     public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, CustomerRepository customerRepository) {
         _orderRepository = orderRepository;
@@ -71,6 +74,7 @@ public class OrderService {
         catch(Exception ex)
         {
             System.out.println(ex.getMessage());
+            _logger.severe("Error retrieving orders: " + ex.getMessage());
             //if theres an issue, return a server error and an empty list of orders
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(orders);
         }
@@ -129,17 +133,59 @@ public class OrderService {
         catch(Exception ex)
         {
             System.out.println(ex.getMessage());
+            _logger.severe("Error creating order: " + ex.getMessage());
             return false;
         }
     }
 
 
+    //Customer MUST  have the state in their address. We can parse the state from the address and apply the appropriate tax rate based on the state.
+    //15 44 n bosworth ave
+    //apt 2r
+    //Chicago
+    //IL
+    //60642
 
-    public boolean ProcessOrder(OrderDTO order)
+    public static BigDecimal CalculateTax(String address, BigDecimal orderTotal)
+    {
+        try
+        {
+            //parse the state from the address, this is a very naive implementation and should be replaced with a more robust solution in production code
+            //we can assume that the state will be on the second to last line of the address, and that it will be in the format "Address, Apt, City, State Zipcode" and delimited by ;
+            String[] addressLines = address.split(";");
+            if(addressLines.length < 2)
+            {
+                throw new IllegalArgumentException("Invalid address format");
+            }
+            String state = addressLines[addressLines.length - 2].trim().split(" ")[0];
+
+            //lookup the tax rate for the state and apply it to the order total
+            String taxRateString = new Constants().TaxByState.get(state);
+            if(taxRateString == null)
+            {
+                System.out.println("No tax rate found for state: " + state);
+                return BigDecimal.ZERO;
+            }
+
+            double taxRate = Double.parseDouble(taxRateString.replace("%", "")) / 100.0;
+            return orderTotal.multiply(BigDecimal.valueOf(taxRate));
+
+        }
+        catch(Exception ex)
+        {
+            System.out.println(ex.getMessage());
+            return BigDecimal.ZERO;
+        }
+    }
+
+    //consider we need to see if the cust wants a new mailing address or if we can just use the one on file.
+    // If they want to use the one on file, we can just pull the state from the customer entity and apply the appropriate tax rate based on that.
+    public boolean ProcessOrder(OrderDTO order, String shippingAddress)
     {
         BigDecimal price = BigDecimal.ZERO;
         try
         {
+
             //if one of the products doesnt exist, return an error message "One or more products in your order does not exist or is out of stock"
             var exists = ValidateOrderItems(order.getOrderId());
 
@@ -167,14 +213,27 @@ public class OrderService {
                 }
             }
 
-            //add tax, shipping, discount etc to total
-/* 
+            //add tax and shipping to total
+            price = CalculateTax(shippingAddress, price);
+            //shipping rates are bound to be dynamic
+            //maybe need a method that performs a shipping calculation based on ups where the cust is vs our closest warehouse, and the weight of the items in the order. 
+            // For now, we can just add a flat shipping rate to the order total.
+            price = price.add(BigDecimal.valueOf(10.00));
+
+
+           
             //update products, can use the entity directly here
             for(var item: userCart)
             {
-
+                var productToUpdate = _productRepository.findById(item.getProductId());
+                if(productToUpdate.isPresent())
+                {
+                    var p = productToUpdate.get();
+                    p.setStockQuantity(p.getStockQuantity() - item.getQuantity());
+                    _productRepository.save(p);
+                }
             }
-*/
+
             return true;
         }
         catch(Exception ex)

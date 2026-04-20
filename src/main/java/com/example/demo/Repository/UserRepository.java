@@ -9,5 +9,7 @@ public interface UserRepository extends JpaRepository<Users, Integer> {
 
 
     Users findUserByPrimaryId(int id);
+
+    java.util.List<Users> findByCustomers_CustomerId(Integer customerId);
 }
  

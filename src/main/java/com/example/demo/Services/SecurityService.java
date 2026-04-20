@@ -6,8 +6,9 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.Entities.Users;
+import com.example.demo.Models.CustomerDTO;
 import com.example.demo.Models.UserDTO;
-import com.example.demo.Repository.CustomerRepository;
 import com.example.demo.Repository.UserRepository;
 
 /*
@@ -25,25 +26,45 @@ import com.example.demo.Repository.UserRepository;
 public class SecurityService {
 
     private final UserRepository _userRepository;
-    private final CustomerRepository _customerRepository;
 
-    public SecurityService(UserRepository userRepository, CustomerRepository customerRepository)
+    public SecurityService(UserRepository userRepository)
     {
         _userRepository = userRepository;
-        _customerRepository = customerRepository;
         System.out.println("SecurityService initialized");
     }
 
 
     //Grabs all users and maps them to a DTO collection.
     //Add filtering to this method, similar to the GetOrders method, to filter by userId or fullName. Maybe add pagination as well if we have a lot of users in the database.
-    public ResponseEntity<List<UserDTO>> GetUsers(int customer_id)
+    //copilot messed with this method a lot, so we may want to rewrite it. It works, but it's not very clean.
+    public ResponseEntity<List<UserDTO>> GetUsers()
     {
-        var userList = _userRepository.findAll();
+        List<Users> userList = _userRepository.findAll();
+
+
         List<UserDTO> userDTOList = new ArrayList<>();
         for(var user : userList)
         {
-            UserDTO userDTO = new UserDTO(user.getPrimaryId(), user.getUserId(), user.getFullName(), user.getLastLogin(), user.getEnabled(), user.getCustomers(_customerRepository.findById(customer_id).orElse(null)));
+            CustomerDTO customerDTO = null;
+            if (user.getCustomers() != null) {
+                customerDTO = new CustomerDTO(
+                    user.getCustomers().getCustomerId(),
+                    user.getCustomers().getFullName(),
+                    user.getCustomers().getEmail(),
+                    user.getCustomers().getPhoneNumber(),
+                    user.getCustomers().getAddress()
+                );
+            }
+
+            //map users
+            UserDTO userDTO = new UserDTO(
+                user.getPrimaryId(),
+                user.getUserId(),
+                user.getFullName(),
+                user.getLastLogin(),
+                user.getEnabled(),
+                customerDTO
+            );
             userDTOList.add(userDTO);
         }
 
